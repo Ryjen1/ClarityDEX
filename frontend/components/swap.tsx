@@ -97,13 +97,13 @@ export function Swap({ pools }: SwapProps) {
   }, [fromToken, toToken, fromAmount]);
 
   return (
-    <div className="flex flex-col max-w-xl w-full gap-4 p-6 border rounded-md">
-      <h1 className="text-xl font-bold">Swap</h1>
+    <div className="flex flex-col max-w-xl w-full gap-4 p-4 md:p-6 border rounded-md">
+      <h1 className="text-lg md:text-xl font-bold">Swap</h1>
 
-      <div className="flex flex-col gap-1">
-        <span className="font-bold">From</span>
+      <div className="flex flex-col gap-2">
+        <span className="font-bold text-sm md:text-base">From</span>
         <select
-          className="border-2 border-gray-500 rounded-lg px-4 py-2 text-black"
+          className="border-2 border-gray-500 rounded-lg px-3 py-2 md:px-4 md:py-2 text-black text-sm md:text-base"
           value={fromToken}
           onChange={(e) => setFromToken(e.target.value)}
         >
@@ -115,16 +115,17 @@ export function Swap({ pools }: SwapProps) {
         </select>
         <input
           type="number"
-          className="border-2 border-gray-500 rounded-lg px-4 py-2 text-black"
+          className="border-2 border-gray-500 rounded-lg px-3 py-2 md:px-4 md:py-2 text-black text-sm md:text-base"
           placeholder="Amount"
           value={fromAmount}
           onChange={(e) => setFromAmount(parseInt(e.target.value))}
+          inputMode="decimal"
         />
       </div>
-      <div className="flex flex-col gap-1">
-        <span className="font-bold">To</span>
+      <div className="flex flex-col gap-2">
+        <span className="font-bold text-sm md:text-base">To</span>
         <select
-          className="border-2 border-gray-500 rounded-lg px-4 py-2 text-black"
+          className="border-2 border-gray-500 rounded-lg px-3 py-2 md:px-4 md:py-2 text-black text-sm md:text-base"
           value={toToken}
           onChange={(e) => setToToken(e.target.value)}
         >
@@ -136,10 +137,10 @@ export function Swap({ pools }: SwapProps) {
         </select>
       </div>
 
-      <span>Estimated Output: {estimatedToAmount.toString()}</span>
+      <span className="text-sm md:text-base">Estimated Output: {estimatedToAmount.toString()}</span>
 
       <button
-        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded  disabled:bg-gray-700 disabled:cursor-not-allowed"
+        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 md:py-3 md:px-6 rounded text-sm md:text-base disabled:bg-gray-700 disabled:cursor-not-allowed"
         disabled={estimatedToAmount < 0}
         onClick={() => {
           const pool = pools.find(
