@@ -5,12 +5,26 @@ import React from "react";
 import { Inter } from "next/font/google";
 import { Navbar } from "@/components/navbar";
 import { MobileNav } from "@/components/mobile-nav";
+import { PWARegistration } from "@/components/pwa-registration";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "ClarityDEX",
   description: "Trade any token on Stacks",
+  manifest: "/manifest.json",
+  themeColor: "#3b82f6",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "ClarityDEX",
+  },
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
+  },
 };
 
 export default function RootLayout({
@@ -29,6 +43,7 @@ export default function RootLayout({
           <div className="md:hidden">
             <MobileNav />
           </div>
+          <PWARegistration />
         </div>
       </body>
     </html>
