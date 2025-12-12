@@ -106,6 +106,22 @@ export function AnalyticsDashboard({ pools }: AnalyticsDashboardProps) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        <p className="ml-4 text-gray-400">Loading analytics data...</p>
+      </div>
+    );
+  }
+
+  if (pools.length === 0) {
+    return (
+      <div className="text-center py-16">
+        <h3 className="text-xl font-semibold mb-4">No Pool Data Available</h3>
+        <p className="text-gray-400 mb-6">There are no active pools to display analytics for.</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-white"
+        >
+          Refresh Data
+        </button>
       </div>
     );
   }
