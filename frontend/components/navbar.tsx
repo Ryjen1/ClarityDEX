@@ -19,6 +19,9 @@ export function Navbar() {
         <Link href="/pools" className="text-gray-300 hover:text-gray-50">
           Pools
         </Link>
+        <Link href="/analytics" className="text-gray-300 hover:text-gray-50">
+          Analytics
+        </Link>
       </div>
 
       <div className="flex items-center gap-2">
