@@ -35,11 +35,30 @@ body {
 button, [role="button"] {
   min-height: 44px;
   min-width: 44px;
+  padding: 8px 16px;
+}
+
+/* Touch-friendly form elements */
+input, select, textarea {
+  min-height: 44px;
+  padding: 8px 12px;
 }
 
 /* Smooth transitions for interactive elements */
 button, a, input, select {
   transition: all 0.2s ease;
+}
+
+/* Touch-friendly focus states */
+button:focus, [role="button"]:focus, input:focus, select:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Touch-friendly tap targets */
+.touch-target {
+  min-height: 48px;
+  min-width: 48px;
 }
 
 /* Mobile viewport settings */
@@ -48,4 +67,26 @@ button, a, input, select {
   initial-scale: 1;
   maximum-scale: 1;
   user-scalable: no;
+}
+
+/* Mobile-specific UI patterns */
+.mobile-card {
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+/* Touch-friendly spacing */
+.mobile-spacing {
+  padding: 16px;
+  gap: 16px;
+}
+
+/* Mobile navigation patterns */
+.mobile-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
 }
