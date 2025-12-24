@@ -137,9 +137,10 @@
                 fee: fee
             })
             (pool-id (get-pool-id pool-info))
-            (pool-data (unwrap! (map-get? pools pool-id) (err u0)))
+            (pool-data (unwrap! (map-get? pools pool-id) ERR_POOL_NOT_FOUND))
             (sender tx-sender)
-            
+            (tx-id (var-get tx-counter))
+
             (pool-liquidity (get liquidity pool-data))
             (balance-0 (get balance-0 pool-data))
             (balance-1 (get balance-1 pool-data))
@@ -149,20 +150,20 @@
 
             ;; is this the first time liquidity is being added?
             (is-initial-liquidity (is-eq pool-liquidity u0))
-            (amounts 
-                (if 
+            (amounts
+                (if
                     is-initial-liquidity
                     ;; if it is the first time, we can add tokens in whatever amounts we want
                     {amount-0: amount-0-desired, amount-1: amount-1-desired}
                     ;; otherwise, we use get-amounts to calculate the amounts of tokens to add within the constraints
-                    (unwrap! (get-amounts amount-0-desired amount-1-desired amount-0-min amount-1-min balance-0 balance-1) (err u0))
+                    (unwrap! (get-amounts amount-0-desired amount-1-desired amount-0-min amount-1-min balance-0 balance-1) ERR_INVALID_PARAMETERS)
                 )
             )
             (amount-0 (get amount-0 amounts))
             (amount-1 (get amount-1 amounts))
-            ;; calculate the new liquidity (L value) 
-            (new-liquidity 
-                (if 
+            ;; calculate the new liquidity (L value)
+            (new-liquidity
+                (if
                     is-initial-liquidity
 
                     ;; if this is first-time liquidity, we subtract MINIMUM_LIQUIDITY to make sure that the pool has at least some liquidity forever
@@ -182,6 +183,9 @@
                 )
             )
         )
+        ;; Validate inputs
+        (asserts! (> amount-0-desired u0) ERR_ZERO_AMOUNT)
+        (asserts! (> amount-1-desired u0) ERR_ZERO_AMOUNT)
         (asserts! (> new-liquidity u0) ERR_INSUFFICIENT_LIQUIDITY_MINTED)
 
         ;; transfer tokens from user to pool
@@ -189,7 +193,7 @@
         (try! (contract-call? token-1 transfer amount-1 sender THIS_CONTRACT none))
 
         ;; update the `positions` map with the new liquidity of the user (pre existing liquidity + new liquidity)
-        (map-set positions 
+        (map-set positions
             {
                 pool-id: pool-id,
                 owner: sender
@@ -205,6 +209,10 @@
             balance-0: (+ balance-0 amount-0),
             balance-1: (+ balance-1 amount-1)
         }))
+
+        ;; Increment tx counter and log success
+        (var-set tx-counter (+ tx-id u1))
+        (map-set transaction-logs {tx-id: tx-id, user: sender} {action: "add-liquidity", status: "success", error-code: none, timestamp: block-height})
 
         (print { action: "add-liquidity", pool-id: pool-id, amount-0: amount-0, amount-1: amount-1, liquidity: (+ user-liquidity new-liquidity) })
         (ok true)
@@ -225,8 +233,9 @@
                 fee: fee
             })
             (pool-id (get-pool-id pool-info))
-            (pool-data (unwrap! (map-get? pools pool-id) (err u0)))
+            (pool-data (unwrap! (map-get? pools pool-id) ERR_POOL_NOT_FOUND))
             (sender tx-sender)
+            (tx-id (var-get tx-counter))
 
             (pool-liquidity (get liquidity pool-data))
             (balance-0 (get balance-0 pool-data))
@@ -241,7 +250,8 @@
 
         )
 
-        ;; make sure user owns enough liquidity to withdraw
+        ;; Validate inputs
+        (asserts! (> liquidity u0) ERR_ZERO_AMOUNT)
         (asserts! (>= user-liquidity liquidity) ERR_INSUFFICIENT_LIQUIDITY_OWNED)
         ;; make sure user is getting at least some amount of tokens back
         (asserts! (> amount-0 u0) ERR_INSUFFICIENT_LIQUIDITY_BURNED)
@@ -252,7 +262,7 @@
         (try! (as-contract (contract-call? token-1 transfer amount-1 THIS_CONTRACT sender none)))
 
         ;; update the `positions` map with the new liquidity of the user (pre existing liquidity - new liquidity)
-        (map-set positions 
+        (map-set positions
             {
                 pool-id: pool-id,
                 owner: sender
@@ -268,6 +278,11 @@
             balance-0: (- balance-0 amount-0),
             balance-1: (- balance-1 amount-1)
         }))
+
+        ;; Increment tx counter and log success
+        (var-set tx-counter (+ tx-id u1))
+        (map-set transaction-logs {tx-id: tx-id, user: sender} {action: "remove-liquidity", status: "success", error-code: none, timestamp: block-height})
+
         (print { action: "remove-liquidity", pool-id: pool-id, amount-0: amount-0, amount-1: amount-1, liquidity: liquidity })
         (ok true)
     )
@@ -278,7 +293,7 @@
 ;; Swaps two tokens in a given pool
 ;; Ensure the pool exists, calculate the amount of tokens to give back to the user, handle the case where the user is swapping for token-0 or token-1
 ;; Transfer input token from user to pool, transfer output token from pool to user, and update mappings as needed
-(define-public (swap (token-0 <ft-trait>) (token-1 <ft-trait>) (fee uint) (input-amount uint) (zero-for-one bool)) 
+(define-public (swap (token-0 <ft-trait>) (token-1 <ft-trait>) (fee uint) (input-amount uint) (zero-for-one bool))
     (let
         (
             ;; compute the pool id and fetch the current state of the pool from the mapping
@@ -288,8 +303,9 @@
                 fee: fee
             })
             (pool-id (get-pool-id pool-info))
-            (pool-data (unwrap! (map-get? pools pool-id) (err u0)))
+            (pool-data (unwrap! (map-get? pools pool-id) ERR_POOL_NOT_FOUND))
             (sender tx-sender)
+            (tx-id (var-get tx-counter))
 
             (pool-liquidity (get liquidity pool-data))
             (balance-0 (get balance-0 pool-data))
@@ -320,7 +336,7 @@
             (balance-1-post-swap (if zero-for-one (- balance-1 output-amount-sub-fees) (+ balance-1 input-amount)))
         )
 
-        ;; make sure user is swapping >0 tokens
+        ;; Validate inputs
         (asserts! (> input-amount u0) ERR_INSUFFICIENT_INPUT_AMOUNT)
         ;; make sure user is getting back >0 tokens
         (asserts! (> output-amount-sub-fees u0) ERR_INSUFFICIENT_LIQUIDITY_FOR_SWAP)
@@ -337,6 +353,10 @@
             balance-0: balance-0-post-swap,
             balance-1: balance-1-post-swap
         }))
+
+        ;; Increment tx counter and log success
+        (var-set tx-counter (+ tx-id u1))
+        (map-set transaction-logs {tx-id: tx-id, user: sender} {action: "swap", status: "success", error-code: none, timestamp: block-height})
 
         (print { action: "swap", pool-id: pool-id, input-amount: input-amount })
         (ok true)
