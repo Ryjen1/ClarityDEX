@@ -3,10 +3,13 @@
 
 
 ;; constants
-;; 
+;;
 (define-constant MINIMUM_LIQUIDITY u1000) ;; minimum liquidity that must exist in a pool
 (define-constant THIS_CONTRACT (as-contract tx-sender)) ;; this contract
 (define-constant FEES_DENOM u10000) ;; fees denominator
+
+;; data vars
+(define-data-var tx-counter uint u0)
 
 ;; errors
 (define-constant ERR_POOL_ALREADY_EXISTS (err u200)) ;; pool already exists
@@ -19,6 +22,16 @@
 (define-constant ERR_INSUFFICIENT_1_AMOUNT (err u207)) ;; insufficient amount of token 1 for swap
 (define-constant ERR_INSUFFICIENT_0_AMOUNT (err u208)) ;; insufficient amount of token 0 for swap
 (define-constant ERR_POOL_NOT_FOUND (err u209)) ;; pool does not exist
+(define-constant ERR_INVALID_FEE (err u210)) ;; invalid fee amount
+(define-constant ERR_ZERO_AMOUNT (err u211)) ;; amount cannot be zero
+(define-constant ERR_TRANSFER_FAILED (err u212)) ;; token transfer failed
+(define-constant ERR_UNAUTHORIZED (err u213)) ;; unauthorized access
+(define-constant ERR_INSUFFICIENT_BALANCE (err u214)) ;; insufficient token balance
+(define-constant ERR_TRANSACTION_TIMEOUT (err u215)) ;; transaction timed out
+(define-constant ERR_NETWORK_ERROR (err u216)) ;; network error
+(define-constant ERR_SLIPPAGE_TOO_HIGH (err u217)) ;; slippage tolerance exceeded
+(define-constant ERR_INVALID_PARAMETERS (err u218)) ;; invalid function parameters
+(define-constant ERR_CONTRACT_PAUSED (err u219)) ;; contract is paused
 
 ;; mappings
 (define-map pools
@@ -34,13 +47,26 @@
     }
 )
 
-(define-map positions 
-    { 
+(define-map positions
+    {
         pool-id: (buff 20),
         owner: principal
-    } 
-    { 
+    }
+    {
         liquidity: uint
+    }
+)
+
+(define-map transaction-logs
+    {
+        tx-id: uint,
+        user: principal
+    }
+    {
+        action: (string-ascii 20),
+        status: (string-ascii 10),
+        error-code: (optional uint),
+        timestamp: uint
     }
 )
 
@@ -48,7 +74,7 @@
 ;; create-pool
 ;; Creates a new pool with the given token-0, token-1, and fee
 ;; Ensures that a pool with these two tokens and given fee amount does not already exist
-(define-public (create-pool (token-0 <ft-trait>) (token-1 <ft-trait>) (fee uint)) 
+(define-public (create-pool (token-0 <ft-trait>) (token-1 <ft-trait>) (fee uint))
     (let (
         ;; Create a pool-info tuple with the information
         (pool-info {
@@ -74,15 +100,23 @@
             balance-0: u0, ;; initially, balance-0 (x) is 0
             balance-1: u0 ;; initially, balance-1 (y) is 0
         })
-    ) 
+        (tx-id (var-get tx-counter))
+        (sender tx-sender)
+    )
 
+    ;; Validate fee is within reasonable bounds
+    (asserts! (and (>= fee u0) (<= fee FEES_DENOM)) ERR_INVALID_FEE)
     ;; If pool does already exist, throw an error
     (asserts! pool-does-not-exist ERR_POOL_ALREADY_EXISTS)
     ;; If the token-0 principal is not "less than" the token-1 principal, throw an error
     (asserts! (is-ok (correct-token-ordering token-0-principal token-1-principal)) ERR_INCORRECT_TOKEN_ORDERING)
-    
+
     ;; Update the `pools` map with the new pool data
     (map-set pools pool-id pool-data)
+    ;; Increment tx counter
+    (var-set tx-counter (+ tx-id u1))
+    ;; Log successful transaction
+    (map-set transaction-logs {tx-id: tx-id, user: sender} {action: "create-pool", status: "success", error-code: none, timestamp: block-height})
     (print { action: "create-pool", data: pool-data})
     (ok true)
     )
