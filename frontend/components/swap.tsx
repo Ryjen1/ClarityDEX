@@ -9,7 +9,7 @@ export interface SwapProps {
 }
 
 export function Swap({ pools }: SwapProps) {
-  const { handleSwap } = useStacks();
+  const { handleSwap, transactionState, retryTransaction } = useStacks();
   const [fromToken, setFromToken] = useState<string>(pools[0]["token-0"]);
   const [toToken, setToToken] = useState<string>(pools[0]["token-1"]);
   const [fromAmount, setFromAmount] = useState<number>(0);
@@ -139,23 +139,52 @@ export function Swap({ pools }: SwapProps) {
 
       <span className="text-sm md:text-base">Estimated Output: {estimatedToAmount.toString()}</span>
 
-      <button
-        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 md:py-3 md:px-6 rounded text-sm md:text-base disabled:bg-gray-700 disabled:cursor-not-allowed"
-        disabled={estimatedToAmount < 0}
-        onClick={() => {
-          const pool = pools.find(
-            (p) =>
-              (p["token-0"] === fromToken && p["token-1"] === toToken) ||
-              (p["token-0"] === toToken && p["token-1"] === fromToken)
-          );
-          if (!pool) return;
+      {transactionState.status === 'error' && (
+        <div className="text-red-500 text-sm">
+          Error: {transactionState.error}
+        </div>
+      )}
 
-          const zeroForOne = fromToken === pool["token-0"];
-          handleSwap(pool, fromAmount, zeroForOne);
-        }}
-      >
-        Swap
-      </button>
+      {transactionState.status === 'success' && (
+        <div className="text-green-500 text-sm">
+          Transaction successful! TX ID: {transactionState.txId}
+        </div>
+      )}
+
+      {transactionState.status === 'pending' && (
+        <div className="text-yellow-500 text-sm">
+          Transaction pending...
+        </div>
+      )}
+
+      <div className="flex gap-2">
+        <button
+          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 md:py-3 md:px-6 rounded text-sm md:text-base disabled:bg-gray-700 disabled:cursor-not-allowed"
+          disabled={estimatedToAmount < 0 || transactionState.status === 'pending'}
+          onClick={() => {
+            const pool = pools.find(
+              (p) =>
+                (p["token-0"] === fromToken && p["token-1"] === toToken) ||
+                (p["token-0"] === toToken && p["token-1"] === fromToken)
+            );
+            if (!pool) return;
+
+            const zeroForOne = fromToken === pool["token-0"];
+            handleSwap(pool, fromAmount, zeroForOne);
+          }}
+        >
+          {transactionState.status === 'pending' ? 'Swapping...' : 'Swap'}
+        </button>
+
+        {transactionState.status === 'error' && (
+          <button
+            className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 md:py-3 md:px-6 rounded text-sm md:text-base"
+            onClick={retryTransaction}
+          >
+            Retry
+          </button>
+        )}
+      </div>
     </div>
   );
 }
