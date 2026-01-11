@@ -11,6 +11,7 @@ import {
   uintCV,
   UIntCV,
 } from "@stacks/transactions";
+import { TokenMetadata, fetchTokenMetadata } from "./token-utils";
 
 
 //  Exported to be used in other files
@@ -43,12 +44,12 @@ type PoolCV = {
 
 export type Pool = {
   id: string;
-  "token-0": string;
-  "token-1": string;
+  token0: TokenMetadata;
+  token1: TokenMetadata;
   fee: number;
   liquidity: number;
-  "balance-0": number;
-  "balance-1": number;
+  balance0: number;
+  balance1: number;
 };
 
 // getAllPools
@@ -124,15 +125,19 @@ export async function getAllPools() {
 
       const poolData = poolDataResult.value.value.value as PoolCV;
 
+      // Fetch token metadata
+      const token0Metadata = await fetchTokenMetadata(poolInitialData["token-0"].value);
+      const token1Metadata = await fetchTokenMetadata(poolInitialData["token-1"].value);
+
       // convert the pool data to a Pool object
       const pool: Pool = {
         id: poolId,
-        "token-0": poolInitialData["token-0"].value,
-        "token-1": poolInitialData["token-1"].value,
+        token0: token0Metadata,
+        token1: token1Metadata,
         fee: parseInt(poolInitialData["fee"].value.toString()),
         liquidity: parseInt(poolData["liquidity"].value.toString()),
-        "balance-0": parseInt(poolData["balance-0"].value.toString()),
-        "balance-1": parseInt(poolData["balance-1"].value.toString()),
+        balance0: parseInt(poolData["balance-0"].value.toString()),
+        balance1: parseInt(poolData["balance-1"].value.toString()),
       };
 
       pools.push(pool);
@@ -172,14 +177,14 @@ export async function addLiquidity(
 
   // If this is not initial liquidity, we need to add amounts in a ratio of the price
   if (pool.liquidity > 0) {
-    const poolRatio = pool["balance-0"] / pool["balance-1"];
+    const poolRatio = pool.balance0 / pool.balance1;
 
     const idealAmount1 = Math.floor(amount0 / poolRatio);
     if (amount1 < idealAmount1) {
       throw new Error(
         `Cannot add liquidity in these amounts. You need to supply at least ${idealAmount1} ${
-          pool["token-1"].split(".")[1]
-        } along with ${amount0} ${pool["token-0"].split(".")[1]}`
+          pool.token1.symbol
+        } along with ${amount0} ${pool.token0.symbol}`
       );
     }
   }
@@ -189,8 +194,8 @@ export async function addLiquidity(
     contractName: AMM_CONTRACT_NAME,
     functionName: "add-liquidity",
     functionArgs: [
-      principalCV(pool["token-0"]),
-      principalCV(pool["token-1"]),
+      principalCV(pool.token0.contractAddress),
+      principalCV(pool.token1.contractAddress),
       uintCV(pool.fee),
       uintCV(amount0),
       uintCV(amount1),
@@ -208,8 +213,8 @@ export async function removeLiquidity(pool: Pool, liquidity: number) {
     contractName: AMM_CONTRACT_NAME,
     functionName: "remove-liquidity",
     functionArgs: [
-      principalCV(pool["token-0"]),
-      principalCV(pool["token-1"]),
+      principalCV(pool.token0.contractAddress),
+      principalCV(pool.token1.contractAddress),
       uintCV(pool.fee),
       uintCV(liquidity),
     ],
@@ -224,8 +229,8 @@ export async function swap(pool: Pool, amount: number, zeroForOne: boolean) {
     contractName: AMM_CONTRACT_NAME,
     functionName: "swap",
     functionArgs: [
-      principalCV(pool["token-0"]),
-      principalCV(pool["token-1"]),
+      principalCV(pool.token0.contractAddress),
+      principalCV(pool.token1.contractAddress),
       uintCV(pool.fee),
       uintCV(amount),
       boolCV(zeroForOne),
