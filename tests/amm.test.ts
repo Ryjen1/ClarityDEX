@@ -169,9 +169,66 @@ describe("AMM Tests", () => {
       withdrawableTokenOnePreSwap
     );
     expect(tokenTwoAmountWithdrawn).toBeLessThan(withdrawableTokenTwoPreSwap);
+    it("validates token metadata for pool tokens", () => {
+      const { result: name1 } = simnet.callReadOnlyFn("mock-token", "get-name", [], alice);
+      expect(name1).toBeOk(Cl.stringAscii("Mock Token"));
+      const { result: symbol1 } = simnet.callReadOnlyFn("mock-token", "get-symbol", [], alice);
+      expect(symbol1).toBeOk(Cl.stringAscii("MT"));
+      const { result: decimals1 } = simnet.callReadOnlyFn("mock-token", "get-decimals", [], alice);
+      expect(decimals1).toBeOk(Cl.uint(6));
+      const { result: name2 } = simnet.callReadOnlyFn("mock-token-2", "get-name", [], alice);
+      expect(name2).toBeOk(Cl.stringAscii("Mock Token"));
+      const { result: symbol2 } = simnet.callReadOnlyFn("mock-token-2", "get-symbol", [], alice);
+      expect(symbol2).toBeOk(Cl.stringAscii("MT"));
+      const { result: decimals2 } = simnet.callReadOnlyFn("mock-token-2", "get-decimals", [], alice);
+      expect(decimals2).toBeOk(Cl.uint(6));
+    });
+  
+    it("allows pool creation with different fee tier", () => {
+      const { result } = simnet.callPublicFn(
+        "amm",
+        "create-pool",
+        [mockTokenOne, mockTokenTwo, Cl.uint(3000)],
+        alice
+      );
+      expect(result).toBeOk(Cl.bool(true));
+    });
+  
+    it("allows pool creation with tokens in different order", () => {
+      const { result } = simnet.callPublicFn(
+        "amm",
+        "create-pool",
+        [mockTokenTwo, mockTokenOne, Cl.uint(500)],
+        alice
+      );
+      expect(result).toBeOk(Cl.bool(true));
+    });
+  
+    it("integration test: simulates real token interactions with multiple operations", () => {
+      createPool();
+      addLiquidity(alice, 1000000, 500000);
+      addLiquidity(bob, 200000, 100000);
+      swap(alice, 100000, true);
+      swap(bob, 50000, false);
+      const { result: poolId } = getPoolId();
+      const aliceLiquidity = simnet.callReadOnlyFn(
+        "amm",
+        "get-position-liquidity",
+        [poolId, Cl.principal(alice)],
+        alice
+      );
+      expect(aliceLiquidity.result).toBeOk(Cl.uint(706106));
+      removeLiquidity(alice, 353053); // Half
+      const aliceLiquidityAfter = simnet.callReadOnlyFn(
+        "amm",
+        "get-position-liquidity",
+        [poolId, Cl.principal(alice)],
+        alice
+      );
+      expect(aliceLiquidityAfter.result).toBeOk(Cl.uint(353053));
+    });
+  
   });
-});
-
 function createPool() {
   return simnet.callPublicFn(
     "amm",
