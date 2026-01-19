@@ -10,6 +10,29 @@ ClarityDEX is a decentralized exchange built on the Stacks blockchain, featuring
 - **📊 Price Quotes**: Preview swap amounts before execution
 - **🔒 Secure**: Built on Stacks blockchain with Clarity smart contracts
 
+## Multi-Token Support
+
+ClarityDEX now supports trading with real Stacks fungible tokens (SIP-010 compliant), expanding beyond just STX.
+
+### Token Discovery and Validation
+
+- **Known Tokens**: A curated list of popular tokens (e.g., STX, Mock Token) is available for quick selection.
+- **Custom Tokens**: Users can input any valid token contract address in the format `address.contract-name`.
+- **Validation**: The system validates tokens by checking for required SIP-010 functions: `get-name`, `get-symbol`, and `get-decimals`.
+- **Metadata Fetching**: Upon validation, token metadata (name, symbol, decimals, total supply) is fetched from the contract.
+
+### Usage Instructions
+
+- In the swap interface, select tokens from the dropdown or enter a custom contract address.
+- For creating pools, choose any two valid tokens to form a trading pair.
+- Ensure the token contract is deployed and accessible on the Stacks testnet.
+
+### Where to look
+
+- Token utilities: [`frontend/lib/token-utils.ts`](frontend/lib/token-utils.ts)
+- Token selector component: [`frontend/components/token-selector.tsx`](frontend/components/token-selector.tsx)
+- Tests: [`tests/token-utils.test.ts`](tests/token-utils.test.ts)
+
 ## Swap Quote Preview Feature
 
 I added a read-only `get-swap-quote` helper to the AMM contract and a `useSwapQuote` hook on the frontend. Together they let the UI ask the pool for an exact output + fee preview before a swap runs.

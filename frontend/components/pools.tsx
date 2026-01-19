@@ -55,7 +55,7 @@ export function PoolListItem({ pool, onStakeClick }: { pool: Pool; onStakeClick?
           target="_blank"
           className="text-blue-400 hover:text-blue-300"
         >
-          {token0Name}
+          {token0Info.symbol}
         </Link>{" "}
         /
         <Link
@@ -63,12 +63,12 @@ export function PoolListItem({ pool, onStakeClick }: { pool: Pool; onStakeClick?
           target="_blank"
           className="text-blue-400 hover:text-blue-300"
         >
-          {token1Name}
+          {token1Info.symbol}
         </Link>
       </div>
       <span>{feesInPercentage}%</span>
       <div className="flex items-center gap-2">
-        {pool["balance-0"]} {token0Name} / {pool["balance-1"]} {token1Name}
+        {pool["balance-0"]} {token0Info.symbol} / {pool["balance-1"]} {token1Info.symbol}
       </div>
       <APRDisplay apr={pool.apr || 0} />
       <div className="flex gap-2">

@@ -3,6 +3,8 @@
 import { useStacks } from "@/hooks/use-stacks";
 import { Pool } from "@/lib/amm";
 import { useEffect, useMemo, useState } from "react";
+import { TokenSelector } from "./token-selector";
+import { TokenMetadata } from "@/lib/token-utils";
 
 export interface SwapProps {
   pools: Pool[];
@@ -14,43 +16,6 @@ export function Swap({ pools }: SwapProps) {
   const [toToken, setToToken] = useState<string>(pools[0]["token-1"]);
   const [fromAmount, setFromAmount] = useState<number>(0);
   const [estimatedToAmount, setEstimatedToAmount] = useState<bigint>(BigInt(0));
-
-  const uniqueTokens = pools.reduce((acc, pool) => {
-    const token0 = pool["token-0"];
-    const token1 = pool["token-1"];
-
-    if (!acc.includes(token0)) {
-      acc.push(token0);
-    }
-
-    if (!acc.includes(token1)) {
-      acc.push(token1);
-    }
-
-    return acc;
-  }, [] as string[]);
-
-  const toTokensList = useMemo(() => {
-    const poolsWithFromToken = pools.filter(
-      (pool) => pool["token-0"] === fromToken || pool["token-1"] === fromToken
-    );
-    const tokensFromPools = poolsWithFromToken.reduce((acc, pool) => {
-      const token0 = pool["token-0"];
-      const token1 = pool["token-1"];
-
-      if (!acc.includes(token0) && token0 !== fromToken) {
-        acc.push(token0);
-      }
-
-      if (!acc.includes(token1) && token1 !== fromToken) {
-        acc.push(token1);
-      }
-
-      return acc;
-    }, [] as string[]);
-
-    return tokensFromPools;
-  }, [fromToken]);
 
   function estimateSwapOutput() {
     const pool = pools.find(
@@ -105,14 +70,12 @@ export function Swap({ pools }: SwapProps) {
         <select
           className="border-2 border-gray-500 rounded-lg px-3 py-2 md:px-4 md:py-2 text-black text-sm md:text-base"
           value={fromToken}
-          onChange={(e) => setFromToken(e.target.value)}
-        >
-          {uniqueTokens.map((token) => (
-            <option key={token} value={token}>
-              {token}
-            </option>
-          ))}
-        </select>
+          onChange={(token, metadata) => {
+            setFromToken(token);
+            setFromTokenMetadata(metadata);
+          }}
+          placeholder="Select from token"
+        />
         <input
           type="number"
           className="border-2 border-gray-500 rounded-lg px-3 py-2 md:px-4 md:py-2 text-black text-sm md:text-base"
@@ -127,14 +90,12 @@ export function Swap({ pools }: SwapProps) {
         <select
           className="border-2 border-gray-500 rounded-lg px-3 py-2 md:px-4 md:py-2 text-black text-sm md:text-base"
           value={toToken}
-          onChange={(e) => setToToken(e.target.value)}
-        >
-          {toTokensList.map((token) => (
-            <option key={token} value={token}>
-              {token}
-            </option>
-          ))}
-        </select>
+          onChange={(token, metadata) => {
+            setToToken(token);
+            setToTokenMetadata(metadata);
+          }}
+          placeholder="Select to token"
+        />
       </div>
 
       <span className="text-sm md:text-base">Estimated Output: {estimatedToAmount.toString()}</span>
