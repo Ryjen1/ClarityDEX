@@ -30,15 +30,42 @@ export const KNOWN_TOKENS: Record<string, TokenMetadata> = {
     symbol: 'MT',
     decimals: 6,
   },
-  // Add more popular testnet tokens here, e.g., USDA or other known test tokens
-  // For example:
-  // 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.usda-token': {
-  //   contractAddress: 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM',
-  //   contractName: 'usda-token',
-  //   name: 'USDA Token',
-  //   symbol: 'USDA',
-  //   decimals: 6,
-  // },
+  'ST3P49R8XXQWG69S66MZASYPTTGNDKK0WW32RRJDN.mock-token-2': {
+    contractAddress: 'ST3P49R8XXQWG69S66MZASYPTTGNDKK0WW32RRJDN',
+    contractName: 'mock-token-2',
+    name: 'Mock Token 2',
+    symbol: 'MT2',
+    decimals: 6,
+  },
+  'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.usda-token': {
+    contractAddress: 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM',
+    contractName: 'usda-token',
+    name: 'USDA',
+    symbol: 'USDA',
+    decimals: 6,
+  },
+  'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.wstx-token': {
+    contractAddress: 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM',
+    contractName: 'wstx-token',
+    name: 'Wrapped STX',
+    symbol: 'wSTX',
+    decimals: 6,
+  },
+  'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.weth-token': {
+    contractAddress: 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM',
+    contractName: 'weth-token',
+    name: 'Wrapped Ether',
+    symbol: 'WETH',
+    decimals: 18,
+  },
+  'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.sbtc-token': {
+    contractAddress: 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM',
+    contractName: 'sbtc-token',
+    name: 'Wrapped Bitcoin',
+    symbol: 'sBTC',
+    decimals: 8,
+  },
+  // Add more popular testnet tokens here as needed
 };
 
 export async function fetchTokenMetadata(contractAddress: string, contractName: string): Promise<TokenMetadata | null> {
