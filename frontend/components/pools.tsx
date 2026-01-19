@@ -1,5 +1,6 @@
 import { Pool } from "@/lib/amm";
 import Link from "next/link";
+import { KNOWN_TOKENS, TokenMetadata } from "@/lib/token-utils";
 
 export interface PoolsListProps {
   pools: Pool[];
@@ -24,9 +25,19 @@ export function PoolsList({ pools }: PoolsListProps) {
   );
 }
 
+function getTokenDisplay(contractAddress: string): { symbol: string; name: string } {
+  const metadata = KNOWN_TOKENS[contractAddress];
+  if (metadata) {
+    return { symbol: metadata.symbol, name: metadata.name };
+  }
+  // Fallback to contract name
+  const contractName = contractAddress.split(".")[1] || contractAddress;
+  return { symbol: contractName, name: contractName };
+}
+
 export function PoolListItem({ pool }: { pool: Pool }) {
-  const token0Name = pool["token-0"].split(".")[1];
-  const token1Name = pool["token-1"].split(".")[1];
+  const token0Info = getTokenDisplay(pool["token-0"]);
+  const token1Info = getTokenDisplay(pool["token-1"]);
   const feesInPercentage = pool.fee / 10_000;
 
   return (
@@ -37,19 +48,19 @@ export function PoolListItem({ pool }: { pool: Pool }) {
           href={`https://explorer.hiro.so/txid/${pool["token-0"]}?chain=testnet`}
           target="_blank"
         >
-          {token0Name}
+          {token0Info.symbol}
         </Link>{" "}
         /
         <Link
           href={`https://explorer.hiro.so/txid/${pool["token-1"]}?chain=testnet`}
           target="_blank"
         >
-          {token1Name}
+          {token1Info.symbol}
         </Link>
       </div>
       <span>{feesInPercentage}%</span>
       <div className="flex items-center gap-2">
-        {pool["balance-0"]} {token0Name} / {pool["balance-1"]} {token1Name}
+        {pool["balance-0"]} {token0Info.symbol} / {pool["balance-1"]} {token1Info.symbol}
       </div>
     </div>
   );
