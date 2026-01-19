@@ -43,4 +43,11 @@ plan:
             path: contracts/mock-token.clar
             anchor-block-only: true
             clarity-version: 3
+        - contract-publish:
+            contract-name: mining
+            expected-sender: ST3P49R8XXQWG69S66MZASYPTTGNDKK0WW32RRJDN
+            cost: 20000
+            path: contracts/mining.clar
+            anchor-block-only: true
+            clarity-version: 3
       epoch: "3.0"

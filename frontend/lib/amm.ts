@@ -49,6 +49,14 @@ export type Pool = {
   liquidity: number;
   "balance-0": number;
   "balance-1": number;
+  // Mining information
+  miningEnabled?: boolean;
+  rewardToken?: string;
+  emissionRate?: number;
+  totalStaked?: number;
+  userStaked?: number;
+  pendingRewards?: number;
+  apr?: number;
 };
 
 // getAllPools
