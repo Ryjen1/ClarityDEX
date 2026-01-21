@@ -41,6 +41,7 @@ export function Swap({ pools }: SwapProps) {
       const xMinusDeltaX = x - deltaX;
       const yPlusDeltaY = k / xMinusDeltaX;
       const deltaY = yPlusDeltaY - y;
+      // Calculate fees as per contract: (output * fee) / 10000 using integer division
       const fees = (deltaY * BigInt(pool.fee)) / BigInt(10000);
       const deltaYMinusFees = deltaY - fees;
       setEstimatedToAmount(deltaYMinusFees);
