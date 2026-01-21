@@ -19,6 +19,7 @@ export function Swap({ pools }: SwapProps) {
   const [fromAmount, setFromAmount] = useState<number>(0);
   const [estimatedToAmount, setEstimatedToAmount] = useState<bigint>(BigInt(0));
 
+  // Estimate the output amount for a swap, matching the contract's calculation
   function estimateSwapOutput() {
     const pool = pools.find(
       (p) =>
