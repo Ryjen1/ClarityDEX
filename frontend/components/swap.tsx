@@ -17,6 +17,7 @@ export function Swap({ pools }: SwapProps) {
   const [fromAmount, setFromAmount] = useState<number>(0);
   const [estimatedToAmount, setEstimatedToAmount] = useState<bigint>(BigInt(0));
 
+  // Estimate the output amount for a swap, matching the contract's calculation
   function estimateSwapOutput() {
     const pool = pools.find(
       (p) =>
@@ -30,7 +31,6 @@ export function Swap({ pools }: SwapProps) {
     const x = BigInt(pool["balance-0"]);
     const y = BigInt(pool["balance-1"]);
     const k = x * y;
-    const feesFloat = pool.fee / 10_000;
 
     if (fromToken === pool["token-0"]) {
       const deltaX = BigInt(fromAmount);
@@ -40,8 +40,9 @@ export function Swap({ pools }: SwapProps) {
       const xMinusDeltaX = x - deltaX;
       const yPlusDeltaY = k / xMinusDeltaX;
       const deltaY = yPlusDeltaY - y;
-      const deltaYMinusFees =
-        deltaY - BigInt(Math.ceil(Number(deltaY) * feesFloat));
+      // Calculate fees as per contract: (output * fee) / 10000 using integer division
+      const fees = (deltaY * BigInt(pool.fee)) / BigInt(10000);
+      const deltaYMinusFees = deltaY - fees;
       setEstimatedToAmount(deltaYMinusFees);
     } else {
       // (x+dx) * (y-dy) = k
@@ -51,8 +52,9 @@ export function Swap({ pools }: SwapProps) {
       const yMinusDeltaY = y - deltaY;
       const xPlusDeltaX = k / yMinusDeltaY;
       const deltaX = xPlusDeltaX - x;
-      const deltaXMinusFees =
-        deltaX - BigInt(Math.ceil(Number(deltaX) * feesFloat));
+      // Calculate fees as per contract: (output * fee) / 10000 using integer division
+      const fees = (deltaX * BigInt(pool.fee)) / BigInt(10000);
+      const deltaXMinusFees = deltaX - fees;
       setEstimatedToAmount(deltaXMinusFees);
     }
   }
