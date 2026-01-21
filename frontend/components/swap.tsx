@@ -83,7 +83,7 @@ export function Swap({ pools }: SwapProps) {
           className="border-2 border-gray-500 rounded-lg px-4 py-2 text-black"
           placeholder="Amount"
           value={fromAmount}
-          onChange={(e) => setFromAmount(parseInt(e.target.value))}
+          onChange={(e) => setFromAmount(parseInt(e.target.value) || 0)}
         />
       </div>
       <div className="flex flex-col gap-1">
