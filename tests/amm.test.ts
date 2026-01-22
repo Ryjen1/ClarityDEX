@@ -165,6 +165,29 @@ describe("AMM Tests", () => {
     expect(actualOutput).toBe(quotedOutput);
   });
 
+  it("rejects swap quotes for excessively large input amounts", () => {
+    createPool();
+    addLiquidity(alice, 1_000_000, 500_000);
+
+    const largeInputAmount = 10_000_000; // Much larger than pool balance
+    // ask the read-only helper what the swap would return
+    const quoteResult = simnet.callReadOnlyFn(
+      "amm",
+      "get-swap-quote",
+      [
+        mockTokenOne,
+        mockTokenTwo,
+        Cl.uint(500),
+        Cl.uint(largeInputAmount),
+        Cl.bool(true),
+      ],
+      alice
+    );
+
+    // Should return an error because net output would be 0 or negative
+    expect(quoteResult.result).toBeErr(Cl.uint(206)); // ERR_INSUFFICIENT_LIQUIDITY_FOR_SWAP
+  });
+
   it("should distribute fees earned amongst LPs", () => {
     createPool();
     addLiquidity(alice, 1000000, 500000);
