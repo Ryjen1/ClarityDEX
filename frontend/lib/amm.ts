@@ -226,7 +226,7 @@ export async function removeLiquidity(pool: Pool, liquidity: number) {
   return txOptions;
 }
 
-export async function swap(pool: Pool, amount: number, zeroForOne: boolean) {
+export async function swap(pool: Pool, amount: number, minOutput: number, zeroForOne: boolean) {
   const txOptions = {
     contractAddress: AMM_CONTRACT_ADDRESS,
     contractName: AMM_CONTRACT_NAME,
@@ -236,6 +236,7 @@ export async function swap(pool: Pool, amount: number, zeroForOne: boolean) {
       principalCV(pool["token-1"]),
       uintCV(pool.fee),
       uintCV(amount),
+      uintCV(minOutput),
       boolCV(zeroForOne),
     ],
   };

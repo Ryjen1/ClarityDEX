@@ -16,6 +16,8 @@ export function Swap({ pools }: SwapProps) {
   const [toToken, setToToken] = useState<string>(pools[0]["token-1"]);
   const [fromAmount, setFromAmount] = useState<number>(0);
   const [estimatedToAmount, setEstimatedToAmount] = useState<bigint>(BigInt(0));
+  const [priceImpact, setPriceImpact] = useState<number>(0);
+  const [slippageTolerance, setSlippageTolerance] = useState<number>(0.5);
   const [errorMessage, setErrorMessage] = useState<string>("");
 
   // Estimate the output amount for a swap, matching the contract's calculation
@@ -34,14 +36,15 @@ export function Swap({ pools }: SwapProps) {
     const y = BigInt(pool["balance-1"]);
     const k = x * y;
 
+    let deltaOutput: bigint;
+    let priceImpact: number = 0;
+
     if (fromToken === pool["token-0"]) {
       const deltaX = BigInt(fromAmount);
-      // (x-dx) * (y+dy) = k
-      // y+dy = k/(x-dx)
-      // dy = (k/(x-dx)) - y
       const xMinusDeltaX = x - deltaX;
       if (xMinusDeltaX <= 0) {
         setEstimatedToAmount(BigInt(0));
+        setPriceImpact(0);
         setErrorMessage("Amount too large for swap");
         return;
       }
@@ -52,13 +55,11 @@ export function Swap({ pools }: SwapProps) {
       const deltaYMinusFees = deltaY - fees;
       setEstimatedToAmount(deltaYMinusFees);
     } else {
-      // (x+dx) * (y-dy) = k
-      // x+dx = k/(y-dy)
-      // dx = (k/(y-dy)) - x
       const deltaY = BigInt(fromAmount);
       const yMinusDeltaY = y - deltaY;
       if (yMinusDeltaY <= 0) {
         setEstimatedToAmount(BigInt(0));
+        setPriceImpact(0);
         setErrorMessage("Amount too large for swap");
         return;
       }
@@ -69,6 +70,8 @@ export function Swap({ pools }: SwapProps) {
       const deltaXMinusFees = deltaX - fees;
       setEstimatedToAmount(deltaXMinusFees);
     }
+    setEstimatedToAmount(deltaOutput);
+    setPriceImpact(priceImpact);
   }
 
   useEffect(() => {

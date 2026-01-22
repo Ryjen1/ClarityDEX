@@ -77,7 +77,7 @@ export function useStacks() {
     setTransactionState({ status: 'pending', action: 'swap' });
     try {
       if (!userData) throw new Error("User not connected");
-      const options = await swap(pool, amount, zeroForOne);
+      const options = await swap(pool, amount, minOutput, zeroForOne);
       await openContractCall({
         ...options,
         appDetails,

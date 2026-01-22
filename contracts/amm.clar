@@ -342,6 +342,8 @@
         (asserts! (> output-amount-sub-fees u0) ERR_INSUFFICIENT_LIQUIDITY_FOR_SWAP)
         ;; make sure we can afford to do this swap (have enough output tokens to give back to user)
         (asserts! (< output-amount-sub-fees output-balance) ERR_INSUFFICIENT_LIQUIDITY_FOR_SWAP)
+        ;; check slippage tolerance
+        (asserts! (>= output-amount-sub-fees min-output-amount) ERR_SLIPPAGE_EXCEEDED)
 
         ;; transfer input token from user to pool
         (try! (contract-call? input-token transfer input-amount sender THIS_CONTRACT none))

@@ -120,7 +120,7 @@ describe("AMM Tests", () => {
     createPool();
     addLiquidity(alice, 1000000, 500000);
 
-    const { result, events } = swap(alice, 100000, true);
+    const { result, events } = swap(alice, 100000, 0, true);
 
     expect(result).toBeOk(Cl.bool(true));
     expect(events[0].data.amount).toBe("100000");
@@ -158,7 +158,7 @@ describe("AMM Tests", () => {
     expect(quotedFee).toBeGreaterThan(0);
 
     // now run the actual swap and confirm the numbers match
-    const swapResult = swap(alice, inputAmount, true);
+    const swapResult = swap(alice, inputAmount, 0, true);
     expect(swapResult.result).toBeOk(Cl.bool(true));
 
     const actualOutput = parseInt(swapResult.events[1].data.amount);
@@ -192,7 +192,7 @@ describe("AMM Tests", () => {
     createPool();
     addLiquidity(alice, 1000000, 500000);
 
-    swap(alice, 100000, true);
+    swap(alice, 100000, 0, true);
 
     // after locking up minimum liquidity
     const withdrawableTokenOnePreSwap = 998585;
@@ -327,7 +327,7 @@ function removeLiquidity(account: string, liquidity: number) {
   );
 }
 
-function swap(account: string, inputAmount: number, zeroForOne: boolean) {
+function swap(account: string, inputAmount: number, minOutput: number, zeroForOne: boolean) {
   return simnet.callPublicFn(
     "amm",
     "swap",
@@ -336,6 +336,7 @@ function swap(account: string, inputAmount: number, zeroForOne: boolean) {
       mockTokenTwo,
       Cl.uint(500),
       Cl.uint(inputAmount),
+      Cl.uint(minOutput),
       Cl.bool(zeroForOne),
     ],
     account
