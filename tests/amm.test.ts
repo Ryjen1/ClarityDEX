@@ -1,5 +1,7 @@
 import { Cl, cvToJSON } from "@stacks/transactions";
 import { beforeEach, describe, expect, it } from "vitest";
+import fs from "fs";
+import path from "path";
 
 const accounts = simnet.getAccounts();
 const deployer = accounts.get("deployer")!;
@@ -9,6 +11,11 @@ const charlie = accounts.get("wallet_3")!;
 
 const mockTokenOne = Cl.contractPrincipal(deployer, "mock-token");
 const mockTokenTwo = Cl.contractPrincipal(deployer, "mock-token-2");
+const mockTokenThree = Cl.contractPrincipal(deployer, "mock-token-3");
+
+// Deploy third mock token
+const mockTokenSource = fs.readFileSync(path.join(__dirname, "../contracts/mock-token.clar"), "utf-8");
+simnet.deployContract("mock-token-3", mockTokenSource);
 
 describe("AMM Tests", () => {
   beforeEach(() => {
@@ -32,6 +39,15 @@ describe("AMM Tests", () => {
       );
 
       expect(mintResultTwo.events.length).toBeGreaterThan(0);
+
+      const mintResultThree = simnet.callPublicFn(
+        "mock-token-3",
+        "mint",
+        [Cl.uint(1_000_000_000), Cl.principal(account)],
+        account
+      );
+
+      expect(mintResultThree.events.length).toBeGreaterThan(0);
     }
   });
 
@@ -192,6 +208,87 @@ describe("AMM Tests", () => {
       withdrawableTokenOnePreSwap
     );
     expect(tokenTwoAmountWithdrawn).toBeLessThan(withdrawableTokenTwoPreSwap);
+  });
+
+  it("allows pool creation with different token pairs", () => {
+    const { result } = simnet.callPublicFn(
+      "amm",
+      "create-pool",
+      [mockTokenOne, mockTokenThree, Cl.uint(500)],
+      alice
+    );
+
+    expect(result).toBeOk(Cl.bool(true));
+  });
+
+  it("allows adding liquidity to different token pair pool", () => {
+    const createPoolRes = simnet.callPublicFn(
+      "amm",
+      "create-pool",
+      [mockTokenOne, mockTokenThree, Cl.uint(500)],
+      alice
+    );
+    expect(createPoolRes.result).toBeOk(Cl.bool(true));
+
+    const addLiqRes = simnet.callPublicFn(
+      "amm",
+      "add-liquidity",
+      [
+        mockTokenOne,
+        mockTokenThree,
+        Cl.uint(500),
+        Cl.uint(1000000),
+        Cl.uint(500000),
+        Cl.uint(0),
+        Cl.uint(0),
+      ],
+      alice
+    );
+
+    expect(addLiqRes.result).toBeOk(Cl.bool(true));
+    expect(addLiqRes.events.length).toBe(3);
+  });
+
+  it("allows swapping in different token pair pool", () => {
+    const createPoolRes = simnet.callPublicFn(
+      "amm",
+      "create-pool",
+      [mockTokenOne, mockTokenThree, Cl.uint(500)],
+      alice
+    );
+    expect(createPoolRes.result).toBeOk(Cl.bool(true));
+
+    const addLiqRes = simnet.callPublicFn(
+      "amm",
+      "add-liquidity",
+      [
+        mockTokenOne,
+        mockTokenThree,
+        Cl.uint(500),
+        Cl.uint(1000000),
+        Cl.uint(500000),
+        Cl.uint(0),
+        Cl.uint(0),
+      ],
+      alice
+    );
+    expect(addLiqRes.result).toBeOk(Cl.bool(true));
+
+    const { result, events } = simnet.callPublicFn(
+      "amm",
+      "swap",
+      [
+        mockTokenOne,
+        mockTokenThree,
+        Cl.uint(500),
+        Cl.uint(100000),
+        Cl.bool(true),
+      ],
+      alice
+    );
+
+    expect(result).toBeOk(Cl.bool(true));
+    expect(events.length).toBe(2);
   });
 });
 
