@@ -73,6 +73,10 @@ export function Swap({ pools }: SwapProps) {
       // y+dy = k/(x-dx)
       // dy = (k/(x-dx)) - y
       const xMinusDeltaX = x - deltaX;
+      if (xMinusDeltaX <= 0) {
+        setEstimatedToAmount(BigInt(0));
+        return;
+      }
       const yPlusDeltaY = k / xMinusDeltaX;
       const deltaY = yPlusDeltaY - y;
       const deltaYMinusFees =
@@ -84,6 +88,10 @@ export function Swap({ pools }: SwapProps) {
       // dx = (k/(y-dy)) - x
       const deltaY = BigInt(fromAmount);
       const yMinusDeltaY = y - deltaY;
+      if (yMinusDeltaY <= 0) {
+        setEstimatedToAmount(BigInt(0));
+        return;
+      }
       const xPlusDeltaX = k / yMinusDeltaY;
       const deltaX = xPlusDeltaX - x;
       const deltaXMinusFees =
