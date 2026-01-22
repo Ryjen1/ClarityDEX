@@ -14,6 +14,7 @@ export function Swap({ pools }: SwapProps) {
   const [toToken, setToToken] = useState<string>(pools[0]["token-1"]);
   const [fromAmount, setFromAmount] = useState<number>(0);
   const [estimatedToAmount, setEstimatedToAmount] = useState<bigint>(BigInt(0));
+  const [errorMessage, setErrorMessage] = useState<string>("");
 
   const uniqueTokens = pools.reduce((acc, pool) => {
     const token0 = pool["token-0"];
@@ -53,6 +54,7 @@ export function Swap({ pools }: SwapProps) {
   }, [fromToken]);
 
   function estimateSwapOutput() {
+    setErrorMessage("");
     const pool = pools.find(
       (p) =>
         (p["token-0"] === fromToken && p["token-1"] === toToken) ||
@@ -75,6 +77,7 @@ export function Swap({ pools }: SwapProps) {
       const xMinusDeltaX = x - deltaX;
       if (xMinusDeltaX <= 0) {
         setEstimatedToAmount(BigInt(0));
+        setErrorMessage("Amount too large for swap");
         return;
       }
       const yPlusDeltaY = k / xMinusDeltaX;
@@ -90,6 +93,7 @@ export function Swap({ pools }: SwapProps) {
       const yMinusDeltaY = y - deltaY;
       if (yMinusDeltaY <= 0) {
         setEstimatedToAmount(BigInt(0));
+        setErrorMessage("Amount too large for swap");
         return;
       }
       const xPlusDeltaX = k / yMinusDeltaY;
@@ -145,6 +149,7 @@ export function Swap({ pools }: SwapProps) {
       </div>
 
       <span>Estimated Output: {estimatedToAmount.toString()}</span>
+      {errorMessage && <span className="text-red-500">{errorMessage}</span>}
 
       <button
         className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded  disabled:bg-gray-700 disabled:cursor-not-allowed"
