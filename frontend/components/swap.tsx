@@ -14,6 +14,8 @@ export function Swap({ pools }: SwapProps) {
   const [toToken, setToToken] = useState<string>(pools[0]["token-1"]);
   const [fromAmount, setFromAmount] = useState<number>(0);
   const [estimatedToAmount, setEstimatedToAmount] = useState<bigint>(BigInt(0));
+  const [priceImpact, setPriceImpact] = useState<number>(0);
+  const [slippageTolerance, setSlippageTolerance] = useState<number>(0.5);
   const [errorMessage, setErrorMessage] = useState<string>("");
 
   const uniqueTokens = pools.reduce((acc, pool) => {
@@ -69,14 +71,15 @@ export function Swap({ pools }: SwapProps) {
     const k = x * y;
     const feesFloat = pool.fee / 10_000;
 
+    let deltaOutput: bigint;
+    let priceImpact: number = 0;
+
     if (fromToken === pool["token-0"]) {
       const deltaX = BigInt(fromAmount);
-      // (x-dx) * (y+dy) = k
-      // y+dy = k/(x-dx)
-      // dy = (k/(x-dx)) - y
       const xMinusDeltaX = x - deltaX;
       if (xMinusDeltaX <= 0) {
         setEstimatedToAmount(BigInt(0));
+        setPriceImpact(0);
         setErrorMessage("Amount too large for swap");
         return;
       }
@@ -84,15 +87,19 @@ export function Swap({ pools }: SwapProps) {
       const deltaY = yPlusDeltaY - y;
       const deltaYMinusFees =
         deltaY - BigInt(Math.ceil(Number(deltaY) * feesFloat));
-      setEstimatedToAmount(deltaYMinusFees);
+      deltaOutput = deltaYMinusFees;
+      // Price impact: (deltaY / (deltaX * (y/x))) - 1
+      const spotPrice = Number(y) / Number(x);
+      const expectedOutput = deltaX * BigInt(Math.floor(spotPrice * 1e18)) / BigInt(1e18);
+      if (expectedOutput > 0) {
+        priceImpact = (Number(deltaY) / Number(expectedOutput) - 1) * 100;
+      }
     } else {
-      // (x+dx) * (y-dy) = k
-      // x+dx = k/(y-dy)
-      // dx = (k/(y-dy)) - x
       const deltaY = BigInt(fromAmount);
       const yMinusDeltaY = y - deltaY;
       if (yMinusDeltaY <= 0) {
         setEstimatedToAmount(BigInt(0));
+        setPriceImpact(0);
         setErrorMessage("Amount too large for swap");
         return;
       }
@@ -100,8 +107,16 @@ export function Swap({ pools }: SwapProps) {
       const deltaX = xPlusDeltaX - x;
       const deltaXMinusFees =
         deltaX - BigInt(Math.ceil(Number(deltaX) * feesFloat));
-      setEstimatedToAmount(deltaXMinusFees);
+      deltaOutput = deltaXMinusFees;
+      // Price impact: (deltaX / (deltaY * (x/y))) - 1
+      const spotPrice = Number(x) / Number(y);
+      const expectedOutput = deltaY * BigInt(Math.floor(spotPrice * 1e18)) / BigInt(1e18);
+      if (expectedOutput > 0) {
+        priceImpact = (Number(deltaX) / Number(expectedOutput) - 1) * 100;
+      }
     }
+    setEstimatedToAmount(deltaOutput);
+    setPriceImpact(priceImpact);
   }
 
   useEffect(() => {
@@ -148,7 +163,22 @@ export function Swap({ pools }: SwapProps) {
         </select>
       </div>
 
+      <div className="flex flex-col gap-1">
+        <span className="font-bold">Slippage Tolerance</span>
+        <select
+          className="border-2 border-gray-500 rounded-lg px-4 py-2 text-black"
+          value={slippageTolerance}
+          onChange={(e) => setSlippageTolerance(parseFloat(e.target.value))}
+        >
+          <option value={0.1}>0.1%</option>
+          <option value={0.5}>0.5%</option>
+          <option value={1.0}>1.0%</option>
+        </select>
+      </div>
+
       <span>Estimated Output: {estimatedToAmount.toString()}</span>
+      <span>Price Impact: {priceImpact.toFixed(2)}%</span>
+      <span>Minimum Received: {Math.floor(Number(estimatedToAmount) * (1 - slippageTolerance / 100))}</span>
       {errorMessage && <span className="text-red-500">{errorMessage}</span>}
 
       <button
@@ -163,7 +193,8 @@ export function Swap({ pools }: SwapProps) {
           if (!pool) return;
 
           const zeroForOne = fromToken === pool["token-0"];
-          handleSwap(pool, fromAmount, zeroForOne);
+          const minOutput = Math.floor(Number(estimatedToAmount) * (1 - slippageTolerance / 100));
+          handleSwap(pool, fromAmount, minOutput, zeroForOne);
         }}
       >
         Swap
