@@ -62,10 +62,10 @@ export function useStacks() {
     }
   }
 
-  async function handleSwap(pool: Pool, amount: number, zeroForOne: boolean) {
+  async function handleSwap(pool: Pool, amount: number, minOutput: number, zeroForOne: boolean) {
     try {
       if (!userData) throw new Error("User not connected");
-      const options = await swap(pool, amount, zeroForOne);
+      const options = await swap(pool, amount, minOutput, zeroForOne);
       await openContractCall({
         ...options,
         appDetails,
