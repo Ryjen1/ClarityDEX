@@ -19,6 +19,7 @@
 (define-constant ERR_INSUFFICIENT_1_AMOUNT (err u207)) ;; insufficient amount of token 1 for swap
 (define-constant ERR_INSUFFICIENT_0_AMOUNT (err u208)) ;; insufficient amount of token 0 for swap
 (define-constant ERR_POOL_NOT_FOUND (err u209)) ;; pool does not exist
+(define-constant ERR_SLIPPAGE_EXCEEDED (err u210)) ;; slippage tolerance exceeded
 
 ;; mappings
 (define-map pools
@@ -244,7 +245,7 @@
 ;; Swaps two tokens in a given pool
 ;; Ensure the pool exists, calculate the amount of tokens to give back to the user, handle the case where the user is swapping for token-0 or token-1
 ;; Transfer input token from user to pool, transfer output token from pool to user, and update mappings as needed
-(define-public (swap (token-0 <ft-trait>) (token-1 <ft-trait>) (fee uint) (input-amount uint) (zero-for-one bool)) 
+(define-public (swap (token-0 <ft-trait>) (token-1 <ft-trait>) (fee uint) (input-amount uint) (min-output-amount uint) (zero-for-one bool))
     (let
         (
             ;; compute the pool id and fetch the current state of the pool from the mapping
@@ -292,6 +293,8 @@
         (asserts! (> output-amount-sub-fees u0) ERR_INSUFFICIENT_LIQUIDITY_FOR_SWAP)
         ;; make sure we can afford to do this swap (have enough output tokens to give back to user)
         (asserts! (< output-amount-sub-fees output-balance) ERR_INSUFFICIENT_LIQUIDITY_FOR_SWAP)
+        ;; check slippage tolerance
+        (asserts! (>= output-amount-sub-fees min-output-amount) ERR_SLIPPAGE_EXCEEDED)
 
         ;; transfer input token from user to pool
         (try! (contract-call? input-token transfer input-amount sender THIS_CONTRACT none))
