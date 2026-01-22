@@ -2,11 +2,15 @@
 
 import { useStacks } from "@/hooks/use-stacks";
 import { useState } from "react";
+import { TokenSelector } from "./token-selector";
+import { TokenMetadata } from "@/lib/token-utils";
 
 export function CreatePool() {
   const { handleCreatePool } = useStacks();
   const [token0, setToken0] = useState("");
   const [token1, setToken1] = useState("");
+  const [token0Metadata, setToken0Metadata] = useState<TokenMetadata | undefined>();
+  const [token1Metadata, setToken1Metadata] = useState<TokenMetadata | undefined>();
   const [fee, setFee] = useState(500);
 
   return (
@@ -14,22 +18,26 @@ export function CreatePool() {
       <h1 className="text-xl font-bold">Create New Pool</h1>
       <div className="flex flex-col gap-1">
         <span className="font-bold">Token 0</span>
-        <input
-          type="text"
-          className="border-2 border-gray-500 rounded-lg px-4 py-2 text-black"
-          placeholder="Token 0"
+        <TokenSelector
           value={token0}
-          onChange={(e) => setToken0(e.target.value)}
+          onChange={(token, metadata) => {
+            setToken0(token);
+            setToken0Metadata(metadata);
+          }}
+          allowCustom={true}
+          placeholder="Select or enter token 0"
         />
       </div>
       <div className="flex flex-col gap-1">
         <span className="font-bold">Token 1</span>
-        <input
-          type="text"
-          className="border-2 border-gray-500 rounded-lg px-4 py-2 text-black"
-          placeholder="Token 1"
+        <TokenSelector
           value={token1}
-          onChange={(e) => setToken1(e.target.value)}
+          onChange={(token, metadata) => {
+            setToken1(token);
+            setToken1Metadata(metadata);
+          }}
+          allowCustom={true}
+          placeholder="Select or enter token 1"
         />
       </div>
       <div className="flex flex-col gap-1">

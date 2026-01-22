@@ -89,4 +89,9 @@ plan:
             emulated-sender: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM
             path: "contracts\\mock-token.clar"
             clarity-version: 3
+        - emulated-contract-publish:
+            contract-name: mining
+            emulated-sender: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM
+            path: "contracts\\mining.clar"
+            clarity-version: 3
       epoch: "3.0"

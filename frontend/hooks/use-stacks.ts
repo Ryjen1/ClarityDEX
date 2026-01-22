@@ -14,14 +14,25 @@ import {
 } from "@stacks/connect";
 import { PostConditionMode } from "@stacks/transactions";
 import { useEffect, useState } from "react";
+import { getErrorMessage, logTransactionError, logTransactionSuccess } from "@/lib/error-utils";
 
 const appDetails = {
   name: "Full Range AMM",
   icon: "https://cryptologos.cc/logos/stacks-stx-logo.png",
 };
 
+export type TransactionStatus = 'idle' | 'pending' | 'success' | 'error';
+
+export interface TransactionState {
+  status: TransactionStatus;
+  error?: string;
+  txId?: string;
+  action?: string;
+}
+
 export function useStacks() {
   const [userData, setUserData] = useState<UserData | null>(null);
+  const [transactionState, setTransactionState] = useState<TransactionState>({ status: 'idle' });
 
   const appConfig = new AppConfig(["store_write"]);
   const userSession = new UserSession({ appConfig });
@@ -62,24 +73,36 @@ export function useStacks() {
     }
   }
 
-  async function handleSwap(pool: Pool, amount: number, minOutput: number, zeroForOne: boolean) {
+  async function handleSwap(pool: Pool, amount: number, zeroForOne: boolean) {
+    setTransactionState({ status: 'pending', action: 'swap' });
     try {
       if (!userData) throw new Error("User not connected");
       const options = await swap(pool, amount, minOutput, zeroForOne);
       await openContractCall({
         ...options,
         appDetails,
-        onFinish: (data) => {
-          window.alert("Sent swap transaction");
-          console.log(data);
+        onFinish: (data: any) => {
+          logTransactionSuccess('swap', data.txId, userData?.profile?.stxAddress?.mainnet);
+          setTransactionState({ status: 'success', txId: data.txId, action: 'swap' });
+        },
+        onCancel: () => {
+          setTransactionState({ status: 'idle' });
         },
         postConditionMode: PostConditionMode.Allow,
       });
-    } catch (_err) {
+    } catch (_err: any) {
       const err = _err as Error;
-      console.log(err);
-      window.alert(err.message);
-      return;
+      let errorMessage = err.message;
+
+      // Try to extract error code from Clarity error
+      const errorMatch = err.message.match(/\(err u(\d+)\)/);
+      if (errorMatch) {
+        const errorCode = parseInt(errorMatch[1]);
+        errorMessage = getErrorMessage(errorCode);
+      }
+
+      logTransactionError('swap', err, userData?.profile?.stxAddress?.mainnet);
+      setTransactionState({ status: 'error', error: errorMessage, action: 'swap' });
     }
   }
 
@@ -139,12 +162,21 @@ export function useStacks() {
     }
   }, []);
 
+  function retryTransaction() {
+    if (transactionState.action === 'swap') {
+      // For now, just reset state. In a real app, you'd store the last params
+      setTransactionState({ status: 'idle' });
+    }
+  }
+
   return {
     userData,
+    transactionState,
     handleCreatePool,
     handleSwap,
     handleAddLiquidity,
     handleRemoveLiquidity,
+    retryTransaction,
     connectWallet,
     disconnectWallet,
   };

@@ -3,13 +3,15 @@
 import { useStacks } from "@/hooks/use-stacks";
 import { Pool } from "@/lib/amm";
 import { useEffect, useMemo, useState } from "react";
+import { TokenSelector } from "./token-selector";
+import { TokenMetadata } from "@/lib/token-utils";
 
 export interface SwapProps {
   pools: Pool[];
 }
 
 export function Swap({ pools }: SwapProps) {
-  const { handleSwap } = useStacks();
+  const { handleSwap, transactionState, retryTransaction } = useStacks();
   const [fromToken, setFromToken] = useState<string>(pools[0]["token-0"]);
   const [toToken, setToToken] = useState<string>(pools[0]["token-1"]);
   const [fromAmount, setFromAmount] = useState<number>(0);
@@ -18,43 +20,7 @@ export function Swap({ pools }: SwapProps) {
   const [slippageTolerance, setSlippageTolerance] = useState<number>(0.5);
   const [errorMessage, setErrorMessage] = useState<string>("");
 
-  const uniqueTokens = pools.reduce((acc, pool) => {
-    const token0 = pool["token-0"];
-    const token1 = pool["token-1"];
-
-    if (!acc.includes(token0)) {
-      acc.push(token0);
-    }
-
-    if (!acc.includes(token1)) {
-      acc.push(token1);
-    }
-
-    return acc;
-  }, [] as string[]);
-
-  const toTokensList = useMemo(() => {
-    const poolsWithFromToken = pools.filter(
-      (pool) => pool["token-0"] === fromToken || pool["token-1"] === fromToken
-    );
-    const tokensFromPools = poolsWithFromToken.reduce((acc, pool) => {
-      const token0 = pool["token-0"];
-      const token1 = pool["token-1"];
-
-      if (!acc.includes(token0) && token0 !== fromToken) {
-        acc.push(token0);
-      }
-
-      if (!acc.includes(token1) && token1 !== fromToken) {
-        acc.push(token1);
-      }
-
-      return acc;
-    }, [] as string[]);
-
-    return tokensFromPools;
-  }, [fromToken]);
-
+  // Estimate the output amount for a swap, matching the contract's calculation
   function estimateSwapOutput() {
     setErrorMessage("");
     const pool = pools.find(
@@ -69,7 +35,6 @@ export function Swap({ pools }: SwapProps) {
     const x = BigInt(pool["balance-0"]);
     const y = BigInt(pool["balance-1"]);
     const k = x * y;
-    const feesFloat = pool.fee / 10_000;
 
     let deltaOutput: bigint;
     let priceImpact: number = 0;
@@ -85,15 +50,10 @@ export function Swap({ pools }: SwapProps) {
       }
       const yPlusDeltaY = k / xMinusDeltaX;
       const deltaY = yPlusDeltaY - y;
-      const deltaYMinusFees =
-        deltaY - BigInt(Math.ceil(Number(deltaY) * feesFloat));
-      deltaOutput = deltaYMinusFees;
-      // Price impact: (deltaY / (deltaX * (y/x))) - 1
-      const spotPrice = Number(y) / Number(x);
-      const expectedOutput = deltaX * BigInt(Math.floor(spotPrice * 1e18)) / BigInt(1e18);
-      if (expectedOutput > 0) {
-        priceImpact = (Number(deltaY) / Number(expectedOutput) - 1) * 100;
-      }
+      // Calculate fees as per contract: (output * fee) / 10000 using integer division
+      const fees = (deltaY * BigInt(pool.fee)) / BigInt(10000);
+      const deltaYMinusFees = deltaY - fees;
+      setEstimatedToAmount(deltaYMinusFees);
     } else {
       const deltaY = BigInt(fromAmount);
       const yMinusDeltaY = y - deltaY;
@@ -105,15 +65,10 @@ export function Swap({ pools }: SwapProps) {
       }
       const xPlusDeltaX = k / yMinusDeltaY;
       const deltaX = xPlusDeltaX - x;
-      const deltaXMinusFees =
-        deltaX - BigInt(Math.ceil(Number(deltaX) * feesFloat));
-      deltaOutput = deltaXMinusFees;
-      // Price impact: (deltaX / (deltaY * (x/y))) - 1
-      const spotPrice = Number(x) / Number(y);
-      const expectedOutput = deltaY * BigInt(Math.floor(spotPrice * 1e18)) / BigInt(1e18);
-      if (expectedOutput > 0) {
-        priceImpact = (Number(deltaX) / Number(expectedOutput) - 1) * 100;
-      }
+      // Calculate fees as per contract: (output * fee) / 10000 using integer division
+      const fees = (deltaX * BigInt(pool.fee)) / BigInt(10000);
+      const deltaXMinusFees = deltaX - fees;
+      setEstimatedToAmount(deltaXMinusFees);
     }
     setEstimatedToAmount(deltaOutput);
     setPriceImpact(priceImpact);
@@ -124,81 +79,90 @@ export function Swap({ pools }: SwapProps) {
   }, [fromToken, toToken, fromAmount]);
 
   return (
-    <div className="flex flex-col max-w-xl w-full gap-4 p-6 border rounded-md">
-      <h1 className="text-xl font-bold">Swap</h1>
+    <div className="flex flex-col max-w-xl w-full gap-4 p-4 md:p-6 border rounded-md">
+      <h1 className="text-lg md:text-xl font-bold">Swap</h1>
 
-      <div className="flex flex-col gap-1">
-        <span className="font-bold">From</span>
+      <div className="flex flex-col gap-2">
+        <span className="font-bold text-sm md:text-base">From</span>
         <select
-          className="border-2 border-gray-500 rounded-lg px-4 py-2 text-black"
+          className="border-2 border-gray-500 rounded-lg px-3 py-2 md:px-4 md:py-2 text-black text-sm md:text-base"
           value={fromToken}
-          onChange={(e) => setFromToken(e.target.value)}
-        >
-          {uniqueTokens.map((token) => (
-            <option key={token} value={token}>
-              {token}
-            </option>
-          ))}
-        </select>
+          onChange={(token, metadata) => {
+            setFromToken(token);
+            setFromTokenMetadata(metadata);
+          }}
+          placeholder="Select from token"
+        />
         <input
           type="number"
-          className="border-2 border-gray-500 rounded-lg px-4 py-2 text-black"
+          className="border-2 border-gray-500 rounded-lg px-3 py-2 md:px-4 md:py-2 text-black text-sm md:text-base"
           placeholder="Amount"
           value={fromAmount}
           onChange={(e) => setFromAmount(parseInt(e.target.value))}
+          inputMode="decimal"
         />
       </div>
-      <div className="flex flex-col gap-1">
-        <span className="font-bold">To</span>
+      <div className="flex flex-col gap-2">
+        <span className="font-bold text-sm md:text-base">To</span>
         <select
-          className="border-2 border-gray-500 rounded-lg px-4 py-2 text-black"
+          className="border-2 border-gray-500 rounded-lg px-3 py-2 md:px-4 md:py-2 text-black text-sm md:text-base"
           value={toToken}
-          onChange={(e) => setToToken(e.target.value)}
-        >
-          {toTokensList.map((token) => (
-            <option key={token} value={token}>
-              {token}
-            </option>
-          ))}
-        </select>
+          onChange={(token, metadata) => {
+            setToToken(token);
+            setToTokenMetadata(metadata);
+          }}
+          placeholder="Select to token"
+        />
       </div>
 
-      <div className="flex flex-col gap-1">
-        <span className="font-bold">Slippage Tolerance</span>
-        <select
-          className="border-2 border-gray-500 rounded-lg px-4 py-2 text-black"
-          value={slippageTolerance}
-          onChange={(e) => setSlippageTolerance(parseFloat(e.target.value))}
+      <span className="text-sm md:text-base">Estimated Output: {estimatedToAmount.toString()}</span>
+
+      {transactionState.status === 'error' && (
+        <div className="text-red-500 text-sm">
+          Error: {transactionState.error}
+        </div>
+      )}
+
+      {transactionState.status === 'success' && (
+        <div className="text-green-500 text-sm">
+          Transaction successful! TX ID: {transactionState.txId}
+        </div>
+      )}
+
+      {transactionState.status === 'pending' && (
+        <div className="text-yellow-500 text-sm">
+          Transaction pending...
+        </div>
+      )}
+
+      <div className="flex gap-2">
+        <button
+          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 md:py-3 md:px-6 rounded text-sm md:text-base disabled:bg-gray-700 disabled:cursor-not-allowed"
+          disabled={estimatedToAmount < 0 || transactionState.status === 'pending'}
+          onClick={() => {
+            const pool = pools.find(
+              (p) =>
+                (p["token-0"] === fromToken && p["token-1"] === toToken) ||
+                (p["token-0"] === toToken && p["token-1"] === fromToken)
+            );
+            if (!pool) return;
+
+            const zeroForOne = fromToken === pool["token-0"];
+            handleSwap(pool, fromAmount, zeroForOne);
+          }}
         >
-          <option value={0.1}>0.1%</option>
-          <option value={0.5}>0.5%</option>
-          <option value={1.0}>1.0%</option>
-        </select>
+          {transactionState.status === 'pending' ? 'Swapping...' : 'Swap'}
+        </button>
+
+        {transactionState.status === 'error' && (
+          <button
+            className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 md:py-3 md:px-6 rounded text-sm md:text-base"
+            onClick={retryTransaction}
+          >
+            Retry
+          </button>
+        )}
       </div>
-
-      <span>Estimated Output: {estimatedToAmount.toString()}</span>
-      <span>Price Impact: {priceImpact.toFixed(2)}%</span>
-      <span>Minimum Received: {Math.floor(Number(estimatedToAmount) * (1 - slippageTolerance / 100))}</span>
-      {errorMessage && <span className="text-red-500">{errorMessage}</span>}
-
-      <button
-        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded  disabled:bg-gray-700 disabled:cursor-not-allowed"
-        disabled={estimatedToAmount < 0}
-        onClick={() => {
-          const pool = pools.find(
-            (p) =>
-              (p["token-0"] === fromToken && p["token-1"] === toToken) ||
-              (p["token-0"] === toToken && p["token-1"] === fromToken)
-          );
-          if (!pool) return;
-
-          const zeroForOne = fromToken === pool["token-0"];
-          const minOutput = Math.floor(Number(estimatedToAmount) * (1 - slippageTolerance / 100));
-          handleSwap(pool, fromAmount, minOutput, zeroForOne);
-        }}
-      >
-        Swap
-      </button>
     </div>
   );
 }
