@@ -15,20 +15,20 @@ export function Navbar() {
   };
 
   return (
-    <nav className="flex w-full items-center justify-between gap-4 p-4 h-16 border-b border-gray-500 relative">
-      <Link href="/" className="text-xl md:text-2xl font-bold">
+    <nav className="flex w-full items-center justify-between gap-4 p-4 h-16 border-b border-gray-200 dark:border-gray-500 relative bg-white dark:bg-gray-900">
+      <Link href="/" className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white">
         ClarityDEX
       </Link>
 
       {/* Desktop Navigation */}
       <div className="hidden md:flex items-center gap-4 md:gap-8">
-        <Link href="/" className="text-gray-300 hover:text-gray-50 px-2 py-1">
+        <Link href="/" className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-50 px-2 py-1">
           Swap
         </Link>
-        <Link href="/pools" className="text-gray-300 hover:text-gray-50 px-2 py-1">
+        <Link href="/pools" className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-50 px-2 py-1">
           Pools
         </Link>
-        <Link href="/analytics" className="text-gray-300 hover:text-gray-50 px-2 py-1">
+        <Link href="/analytics" className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-50 px-2 py-1">
           Analytics
         </Link>
       </div>
@@ -37,7 +37,7 @@ export function Navbar() {
       <div className="hidden md:flex items-center gap-2">
         <button
           onClick={toggleTheme}
-          className="p-2 rounded-lg bg-gray-700 hover:bg-gray-600 transition-colors"
+          className="p-2 rounded-lg bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
           aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
         >
           {theme === 'dark' ? (
@@ -143,25 +143,25 @@ export function Navbar() {
 
       {/* Mobile Navigation Menu */}
       {isMobileMenuOpen && (
-        <div className="md:hidden absolute top-full left-0 right-0 bg-gray-900 border-t border-gray-500 z-50">
+        <div className="md:hidden absolute top-full left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-500 z-50">
           <div className="flex flex-col items-center gap-4 p-4">
             <Link
               href="/"
-              className="text-gray-300 hover:text-gray-50 py-2"
+              className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-50 py-2"
               onClick={() => setIsMobileMenuOpen(false)}
             >
               Swap
             </Link>
             <Link
               href="/pools"
-              className="text-gray-300 hover:text-gray-50 py-2"
+              className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-50 py-2"
               onClick={() => setIsMobileMenuOpen(false)}
             >
               Pools
             </Link>
             <Link
               href="/analytics"
-              className="text-gray-300 hover:text-gray-50 py-2"
+              className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-50 py-2"
               onClick={() => setIsMobileMenuOpen(false)}
             >
               Analytics
@@ -171,7 +171,7 @@ export function Navbar() {
                 toggleTheme();
                 setIsMobileMenuOpen(false);
               }}
-              className="flex items-center gap-2 text-gray-300 hover:text-gray-50 py-2"
+              className="flex items-center gap-2 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-50 py-2"
             >
               {theme === 'dark' ? (
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
