@@ -5,6 +5,7 @@ import { Pool } from "@/lib/amm";
 import { useEffect, useMemo, useState } from "react";
 import { TokenSelector } from "./token-selector";
 import { TokenMetadata } from "@/lib/token-utils";
+import { useGasEstimate } from "@/hooks/use-gas-estimate";
 
 export interface SwapProps {
   pools: Pool[];
@@ -19,6 +20,10 @@ export function Swap({ pools }: SwapProps) {
   const [priceImpact, setPriceImpact] = useState<number>(0);
   const [slippageTolerance, setSlippageTolerance] = useState<number>(0.5);
   const [errorMessage, setErrorMessage] = useState<string>("");
+  const [fromTokenMetadata, setFromTokenMetadata] = useState<TokenMetadata | undefined>();
+  const [toTokenMetadata, setToTokenMetadata] = useState<TokenMetadata | undefined>();
+
+  const { fee: estimatedGasFee, isLoading: gasLoading, error: gasError } = useGasEstimate(fromAmount > 0);
 
   // Estimate the output amount for a swap, matching the contract's calculation
   function estimateSwapOutput() {
@@ -48,12 +53,13 @@ export function Swap({ pools }: SwapProps) {
         setErrorMessage("Amount too large for swap");
         return;
       }
+
       const yPlusDeltaY = k / xMinusDeltaX;
       const deltaY = yPlusDeltaY - y;
       // Calculate fees as per contract: (output * fee) / 10000 using integer division
       const fees = (deltaY * BigInt(pool.fee)) / BigInt(10000);
-      const deltaYMinusFees = deltaY - fees;
-      setEstimatedToAmount(deltaYMinusFees);
+      deltaOutput = deltaY - fees;
+      setEstimatedToAmount(deltaOutput);
     } else {
       const deltaY = BigInt(fromAmount);
       const yMinusDeltaY = y - deltaY;
@@ -67,13 +73,11 @@ export function Swap({ pools }: SwapProps) {
       const deltaX = xPlusDeltaX - x;
       // Calculate fees as per contract: (output * fee) / 10000 using integer division
       const fees = (deltaX * BigInt(pool.fee)) / BigInt(10000);
-      const deltaXMinusFees = deltaX - fees;
-      setEstimatedToAmount(deltaXMinusFees);
+      deltaOutput = deltaX - fees;
+      setEstimatedToAmount(deltaOutput);
     }
-    setEstimatedToAmount(deltaOutput);
     setPriceImpact(priceImpact);
   }
-
   useEffect(() => {
     estimateSwapOutput();
   }, [fromToken, toToken, fromAmount]);
@@ -84,8 +88,7 @@ export function Swap({ pools }: SwapProps) {
 
       <div className="flex flex-col gap-2">
         <span className="font-bold text-sm md:text-base">From</span>
-        <select
-          className="border-2 border-gray-500 rounded-lg px-3 py-2 md:px-4 md:py-2 text-black text-sm md:text-base"
+        <TokenSelector
           value={fromToken}
           onChange={(token, metadata) => {
             setFromToken(token);
@@ -104,8 +107,7 @@ export function Swap({ pools }: SwapProps) {
       </div>
       <div className="flex flex-col gap-2">
         <span className="font-bold text-sm md:text-base">To</span>
-        <select
-          className="border-2 border-gray-500 rounded-lg px-3 py-2 md:px-4 md:py-2 text-black text-sm md:text-base"
+        <TokenSelector
           value={toToken}
           onChange={(token, metadata) => {
             setToToken(token);
@@ -116,6 +118,12 @@ export function Swap({ pools }: SwapProps) {
       </div>
 
       <span className="text-sm md:text-base">Estimated Output: {estimatedToAmount.toString()}</span>
+
+      {fromAmount > 0 && (
+        <span className="text-sm md:text-base">
+          Estimated Gas Fee: {gasLoading ? 'Loading...' : gasError ? 'Error estimating fee' : `${estimatedGasFee} microSTX`}
+        </span>
+      )}
 
       {transactionState.status === 'error' && (
         <div className="text-red-500 text-sm">
