@@ -79,7 +79,7 @@ export function Swap({ pools }: SwapProps) {
   }, [fromToken, toToken, fromAmount]);
 
   return (
-    <div className="flex flex-col max-w-xl w-full gap-4 p-4 md:p-6 border rounded-md">
+    <div className="flex flex-col max-w-xl w-full gap-4 p-4 md:p-6 border rounded-md bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-500">
       <h1 className="text-lg md:text-xl font-bold">Swap</h1>
 
       <div className="flex flex-col gap-2">
