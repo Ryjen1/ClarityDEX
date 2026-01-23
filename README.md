@@ -8,6 +8,7 @@ ClarityDEX is a decentralized exchange built on the Stacks blockchain, featuring
 - **💧 Liquidity Pools**: Create and manage token trading pairs
 - **⚡ Swap Trading**: Instant token exchanges with real-time pricing
 - **📊 Price Quotes**: Preview swap amounts before execution
+- **⛽ Gas Fee Estimation**: See estimated network fees before swapping
 - **🔒 Secure**: Built on Stacks blockchain with Clarity smart contracts
 
 ## Multi-Token Support
@@ -49,3 +50,21 @@ I added a read-only `get-swap-quote` helper to the AMM contract and a `useSwapQu
 
 ### Quick demo idea
 Type an amount into the swap form, watch the hook surface the preview, then execute the swap and see the on-chain result match the quote.
+
+## Gas Fee Estimation Feature
+
+ClarityDEX now provides real-time gas fee estimation for swap transactions, helping users understand the network costs before executing trades.
+
+### How it works
+- Fetches current fee rates from the Stacks network API
+- Displays estimated fees in microSTX alongside swap previews
+- Updates automatically when swap parameters change
+- Falls back to reasonable estimates if network data is unavailable
+
+### Where to look
+- Gas estimation hook: [`frontend/hooks/use-gas-estimate.ts`](frontend/hooks/use-gas-estimate.ts)
+- Integration in swap UI: [`frontend/components/swap.tsx`](frontend/components/swap.tsx)
+- Tests: [`tests/use-gas-estimate.test.ts`](tests/use-gas-estimate.test.ts)
+
+### Usage
+When entering a swap amount, the estimated gas fee appears below the output preview, giving users full transparency on total transaction costs.
