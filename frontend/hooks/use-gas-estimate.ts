@@ -25,15 +25,21 @@ export function useGasEstimate(
       setError(null);
 
       try {
-        // For now, use a reasonable estimate for contract calls
-        // Typical contract call fee on Stacks testnet is around 200-500 microSTX
-        // In production, this should be fetched from the network
-        const estimatedFee = 300; // microSTX
+        // Fetch current fee estimates from Stacks API
+        const response = await fetch('https://stacks-node-api.testnet.stacks.co/v2/fees/transfer');
+        if (!response.ok) {
+          throw new Error('Failed to fetch fee data');
+        }
+        const feeData = await response.json();
+
+        // Use a multiplier for contract calls (typically higher than transfers)
+        const estimatedFee = Math.ceil(feeData.low * 2); // microSTX
         setFee(estimatedFee);
       } catch (err) {
         console.error('Gas estimation error:', err);
-        setError('Failed to estimate gas fee');
-        setFee(0);
+        // Fallback to a reasonable estimate
+        setError('Using fallback fee estimate');
+        setFee(300); // microSTX
       } finally {
         setIsLoading(false);
       }
