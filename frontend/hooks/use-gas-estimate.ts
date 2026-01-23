@@ -6,6 +6,11 @@ export interface GasEstimate {
   error: string | null;
 }
 
+/**
+ * Hook for estimating gas fees for Stacks transactions
+ * @param enabled - Whether to enable gas estimation (default: true)
+ * @returns GasEstimate object with fee, loading state, and error
+ */
 export function useGasEstimate(
   enabled: boolean = true
 ): GasEstimate {
