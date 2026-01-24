@@ -156,7 +156,8 @@ export function Swap({ pools }: SwapProps) {
             if (!pool) return;
 
             const zeroForOne = fromToken === pool["token-0"];
-            handleSwap(pool, fromAmount, zeroForOne);
+            const minOutput = Math.floor(Number(estimatedToAmount) * (1 - slippageTolerance / 100));
+            handleSwap(pool, fromAmount, minOutput, zeroForOne);
           }}
         >
           {transactionState.status === 'pending' ? 'Swapping...' : 'Swap'}
