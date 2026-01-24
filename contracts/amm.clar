@@ -293,7 +293,7 @@
 ;; Swaps two tokens in a given pool
 ;; Ensure the pool exists, calculate the amount of tokens to give back to the user, handle the case where the user is swapping for token-0 or token-1
 ;; Transfer input token from user to pool, transfer output token from pool to user, and update mappings as needed
-(define-public (swap (token-0 <ft-trait>) (token-1 <ft-trait>) (fee uint) (input-amount uint) (zero-for-one bool))
+(define-public (swap (token-0 <ft-trait>) (token-1 <ft-trait>) (fee uint) (input-amount uint) (zero-for-one bool) (min-output-amount uint))
     (let
         (
             ;; compute the pool id and fetch the current state of the pool from the mapping
