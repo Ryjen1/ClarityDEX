@@ -116,7 +116,7 @@
     ;; Increment tx counter
     (var-set tx-counter (+ tx-id u1))
     ;; Log successful transaction
-    (map-set transaction-logs {tx-id: tx-id, user: sender} {action: "create-pool", status: "success", error-code: none, timestamp: block-height})
+    (map-set transaction-logs {tx-id: tx-id, user: sender} {action: "create-pool", status: "success", error-code: none, timestamp: stacks-block-height})
     (print { action: "create-pool", data: pool-data})
     (ok true)
     )
