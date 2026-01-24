@@ -358,7 +358,7 @@
 
         ;; Increment tx counter and log success
         (var-set tx-counter (+ tx-id u1))
-        (map-set transaction-logs {tx-id: tx-id, user: sender} {action: "swap", status: "success", error-code: none, timestamp: block-height})
+        (map-set transaction-logs {tx-id: tx-id, user: sender} {action: "swap", status: "success", error-code: none, timestamp: stacks-block-height})
 
         (print { action: "swap", pool-id: pool-id, input-amount: input-amount })
         (ok true)
