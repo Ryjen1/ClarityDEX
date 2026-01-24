@@ -236,8 +236,8 @@ export async function swap(pool: Pool, amount: number, minOutput: number, zeroFo
       principalCV(pool["token-1"]),
       uintCV(pool.fee),
       uintCV(amount),
-      uintCV(minOutput),
       boolCV(zeroForOne),
+      uintCV(minOutput),
     ],
   };
 
