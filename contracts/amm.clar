@@ -28,6 +28,7 @@
 (define-constant ERR_UNAUTHORIZED (err u213)) ;; unauthorized access
 (define-constant ERR_INSUFFICIENT_BALANCE (err u214)) ;; insufficient token balance
 (define-constant ERR_TRANSACTION_TIMEOUT (err u215)) ;; transaction timed out
+(define-constant ERR_SLIPPAGE_EXCEEDED (err u216)) ;; slippage tolerance exceeded
 (define-constant ERR_NETWORK_ERROR (err u216)) ;; network error
 (define-constant ERR_SLIPPAGE_TOO_HIGH (err u217)) ;; slippage tolerance exceeded
 (define-constant ERR_INVALID_PARAMETERS (err u218)) ;; invalid function parameters
