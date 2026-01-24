@@ -28,6 +28,7 @@
 (define-constant ERR_UNAUTHORIZED (err u213)) ;; unauthorized access
 (define-constant ERR_INSUFFICIENT_BALANCE (err u214)) ;; insufficient token balance
 (define-constant ERR_TRANSACTION_TIMEOUT (err u215)) ;; transaction timed out
+(define-constant ERR_SLIPPAGE_EXCEEDED (err u216)) ;; slippage tolerance exceeded
 (define-constant ERR_NETWORK_ERROR (err u216)) ;; network error
 (define-constant ERR_SLIPPAGE_TOO_HIGH (err u217)) ;; slippage tolerance exceeded
 (define-constant ERR_INVALID_PARAMETERS (err u218)) ;; invalid function parameters
@@ -116,7 +117,7 @@
     ;; Increment tx counter
     (var-set tx-counter (+ tx-id u1))
     ;; Log successful transaction
-    (map-set transaction-logs {tx-id: tx-id, user: sender} {action: "create-pool", status: "success", error-code: none, timestamp: block-height})
+    (map-set transaction-logs {tx-id: tx-id, user: sender} {action: "create-pool", status: "success", error-code: none, timestamp: stacks-block-height})
     (print { action: "create-pool", data: pool-data})
     (ok true)
     )
@@ -212,7 +213,7 @@
 
         ;; Increment tx counter and log success
         (var-set tx-counter (+ tx-id u1))
-        (map-set transaction-logs {tx-id: tx-id, user: sender} {action: "add-liquidity", status: "success", error-code: none, timestamp: block-height})
+        (map-set transaction-logs {tx-id: tx-id, user: sender} {action: "add-liquidity", status: "success", error-code: none, timestamp: stacks-block-height})
 
         (print { action: "add-liquidity", pool-id: pool-id, amount-0: amount-0, amount-1: amount-1, liquidity: (+ user-liquidity new-liquidity) })
         (ok true)
@@ -281,7 +282,7 @@
 
         ;; Increment tx counter and log success
         (var-set tx-counter (+ tx-id u1))
-        (map-set transaction-logs {tx-id: tx-id, user: sender} {action: "remove-liquidity", status: "success", error-code: none, timestamp: block-height})
+        (map-set transaction-logs {tx-id: tx-id, user: sender} {action: "remove-liquidity", status: "success", error-code: none, timestamp: stacks-block-height})
 
         (print { action: "remove-liquidity", pool-id: pool-id, amount-0: amount-0, amount-1: amount-1, liquidity: liquidity })
         (ok true)
@@ -293,7 +294,7 @@
 ;; Swaps two tokens in a given pool
 ;; Ensure the pool exists, calculate the amount of tokens to give back to the user, handle the case where the user is swapping for token-0 or token-1
 ;; Transfer input token from user to pool, transfer output token from pool to user, and update mappings as needed
-(define-public (swap (token-0 <ft-trait>) (token-1 <ft-trait>) (fee uint) (input-amount uint) (zero-for-one bool))
+(define-public (swap (token-0 <ft-trait>) (token-1 <ft-trait>) (fee uint) (input-amount uint) (zero-for-one bool) (min-output-amount uint))
     (let
         (
             ;; compute the pool id and fetch the current state of the pool from the mapping
@@ -358,7 +359,7 @@
 
         ;; Increment tx counter and log success
         (var-set tx-counter (+ tx-id u1))
-        (map-set transaction-logs {tx-id: tx-id, user: sender} {action: "swap", status: "success", error-code: none, timestamp: block-height})
+        (map-set transaction-logs {tx-id: tx-id, user: sender} {action: "swap", status: "success", error-code: none, timestamp: stacks-block-height})
 
         (print { action: "swap", pool-id: pool-id, input-amount: input-amount })
         (ok true)

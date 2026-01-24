@@ -68,3 +68,21 @@ ClarityDEX now provides real-time gas fee estimation for swap transactions, help
 
 ### Usage
 When entering a swap amount, the estimated gas fee appears below the output preview, giving users full transparency on total transaction costs.
+
+## Slippage Protection Feature
+
+ClarityDEX now includes slippage tolerance protection for swap transactions, preventing users from receiving significantly less than expected due to price movements.
+
+### How it works
+- Users can set a slippage tolerance percentage (default 0.5%)
+- Contract validates that output amount meets minimum requirements
+- Transactions revert if slippage exceeds tolerance
+- Protects against front-running and price manipulation
+
+### Where to look
+- Contract validation: `contracts/amm.clar` → `swap` function
+- Frontend integration: `frontend/components/swap.tsx`
+- Error handling: `frontend/hooks/use-stacks.ts`
+
+### Usage
+Set your preferred slippage tolerance in the swap interface. The contract will ensure you receive at least the calculated amount minus the tolerance percentage.
