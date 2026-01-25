@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { TokenSelector } from "./token-selector";
 import { TokenMetadata } from "@/lib/token-utils";
 import { useGasEstimate } from "@/hooks/use-gas-estimate";
+import { validateSlippageTolerance } from "@/lib/validation";
 
 export interface SwapProps {
   pools: Pool[];
@@ -18,8 +19,9 @@ export function Swap({ pools }: SwapProps) {
   const [fromAmount, setFromAmount] = useState<number>(0);
   const [estimatedToAmount, setEstimatedToAmount] = useState<bigint>(BigInt(0));
   const [priceImpact, setPriceImpact] = useState<number>(0);
-  const [slippageTolerance, setSlippageTolerance] = useState<number>(0.5);
+  const [slippageTolerance, setSlippageTolerance] = useState<string>("0.5");
   const [errorMessage, setErrorMessage] = useState<string>("");
+  const [slippageError, setSlippageError] = useState<string>("");
   const [fromTokenMetadata, setFromTokenMetadata] = useState<TokenMetadata | undefined>();
   const [toTokenMetadata, setToTokenMetadata] = useState<TokenMetadata | undefined>();
 
@@ -119,6 +121,25 @@ export function Swap({ pools }: SwapProps) {
 
       <span className="text-sm md:text-base">Estimated Output: {estimatedToAmount.toString()}</span>
 
+      <div className="flex flex-col gap-2">
+        <span className="font-bold text-sm md:text-base">Slippage Tolerance (%)</span>
+        <input
+          type="text"
+          className="border-2 border-gray-500 rounded-lg px-3 py-2 md:px-4 md:py-2 text-black text-sm md:text-base"
+          placeholder="0.5"
+          value={slippageTolerance}
+          onChange={(e) => {
+            const value = e.target.value;
+            setSlippageTolerance(value);
+            const validation = validateSlippageTolerance(value);
+            setSlippageError(validation.isValid ? "" : validation.errorMessage || "");
+          }}
+        />
+        {slippageError && (
+          <span className="text-red-500 text-sm">{slippageError}</span>
+        )}
+      </div>
+
       {fromAmount > 0 && (
         <span className="text-sm md:text-base">
           Estimated Gas Fee: {gasLoading ? 'Loading...' : gasError ? 'Error estimating fee' : `${estimatedGasFee} microSTX`}
@@ -146,7 +167,7 @@ export function Swap({ pools }: SwapProps) {
       <div className="flex gap-2">
         <button
           className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 md:py-3 md:px-6 rounded text-sm md:text-base disabled:bg-gray-700 disabled:cursor-not-allowed"
-          disabled={estimatedToAmount < 0 || transactionState.status === 'pending'}
+          disabled={estimatedToAmount < 0 || transactionState.status === 'pending' || !!slippageError}
           onClick={() => {
             const pool = pools.find(
               (p) =>
@@ -156,7 +177,7 @@ export function Swap({ pools }: SwapProps) {
             if (!pool) return;
 
             const zeroForOne = fromToken === pool["token-0"];
-            const minOutput = Math.floor(Number(estimatedToAmount) * (1 - slippageTolerance / 100));
+            const minOutput = Math.floor(Number(estimatedToAmount) * (1 - parseFloat(slippageTolerance) / 100));
             handleSwap(pool, fromAmount, minOutput, zeroForOne);
           }}
         >
