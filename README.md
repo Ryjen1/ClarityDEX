@@ -74,7 +74,8 @@ When entering a swap amount, the estimated gas fee appears below the output prev
 ClarityDEX now includes slippage tolerance protection for swap transactions, preventing users from receiving significantly less than expected due to price movements.
 
 ### How it works
-- Users can set a slippage tolerance percentage (default 0.5%)
+- Users can input a custom slippage tolerance percentage (default 0.5%)
+- Input validation ensures values are between 0.01% and 50% with at most 2 decimal places
 - Contract validates that output amount meets minimum requirements
 - Transactions revert if slippage exceeds tolerance
 - Protects against front-running and price manipulation
@@ -82,7 +83,9 @@ ClarityDEX now includes slippage tolerance protection for swap transactions, pre
 ### Where to look
 - Contract validation: `contracts/amm.clar` → `swap` function
 - Frontend integration: `frontend/components/swap.tsx`
+- Input validation: `frontend/lib/validation.ts`
 - Error handling: `frontend/hooks/use-stacks.ts`
+- Tests: `tests/validation.test.ts`
 
 ### Usage
-Set your preferred slippage tolerance in the swap interface. The contract will ensure you receive at least the calculated amount minus the tolerance percentage.
+Set your preferred slippage tolerance in the swap interface. The system validates the input and displays errors for invalid values. The contract will ensure you receive at least the calculated amount minus the tolerance percentage.
